@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 class SiameseCNN(nn.Module):
     def __init__(self):
@@ -25,7 +26,7 @@ class SiameseCNN(nn.Module):
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        return x
+        return F.normalize(x, p=2, dim=1)
 
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)

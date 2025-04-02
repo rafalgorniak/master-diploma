@@ -38,15 +38,15 @@ test_dataset = torchvision.datasets.Omniglot(
 train_siamese = SiameseTrainDataset(train_dataset)
 test_siamese = SiameseTestDataset(test_dataset)
 
-train_siamese = limit_dataset_size(train_siamese, 500)
+train_siamese = limit_dataset_size(train_siamese, 5000)
 
-train_loader = DataLoader(train_siamese, batch_size=32, shuffle=True)
+train_loader = DataLoader(train_siamese, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_siamese, batch_size=32, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = SiameseCNN().to(device)
-criterion = ContrastiveLoss(margin=2.0)
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+criterion = ContrastiveLoss(margin=1.0)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 
 def train(model, train_loader, optimizer, criterion, epochs=10):
@@ -161,10 +161,8 @@ def evaluate_few_shot(model, test_dataset, n_way=5, k_shot=2, num_queries=5, num
             img = img.unsqueeze(0).to(device)  # Przenoszenie na właściwe urządzenie
             q_emb = model.forward_one(img).detach()
 
-            # Bezpieczniejsza wersja obliczeń
-            with torch.no_grad():
-                distances = torch.cdist(q_emb, torch.stack(prototypes))
-                pred = classes[torch.argmin(distances)]
+            distances = torch.cdist(q_emb, torch.stack(prototypes))
+            pred = classes[torch.argmin(distances)]
 
             if pred == true_label:
                 correct += 1
@@ -175,6 +173,6 @@ def evaluate_few_shot(model, test_dataset, n_way=5, k_shot=2, num_queries=5, num
     return accuracy
 
 
-train(model, train_loader, optimizer, criterion, epochs=5)
+train(model, train_loader, optimizer, criterion, epochs=10)
 
 evaluate_few_shot(model, test_siamese, n_way=5, k_shot=2)
